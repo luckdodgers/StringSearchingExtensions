@@ -31,7 +31,7 @@ namespace StringSearchingExtensions
             return counter;
         }
 
-        public static int ConcurentOccurrencesCount(this string text, string pattern, bool ignoreCase = false, int maxDegreeOfParallelism = 8)
+        public static int ConcurentOccurrencesCount(this string text, string pattern, bool ignoreCase = false)
         {
             Helpers.ValidateParameters(text, pattern);
             if (Helpers.CheckForZeroResult(text, pattern))
@@ -61,7 +61,7 @@ namespace StringSearchingExtensions
             return counter;
         }
 
-        public static int BoyerMooreOccurrencesCount(this string text, string pattern, bool ignoreCase = false)
+        public static int BoyerMooreAsciiOccurrencesCount(this string text, string pattern, bool ignoreCase = false)
         {
             Helpers.ValidateParameters(text, pattern);
             if (Helpers.CheckForZeroResult(text, pattern))
@@ -74,9 +74,8 @@ namespace StringSearchingExtensions
             }
 
             const int BlockSize = 256;
-            const int SquaredBlockSize = BlockSize * BlockSize;
 
-            Span<byte> skipArray = new byte[SquaredBlockSize];
+            Span<byte> skipArray = new byte[BlockSize];
             skipArray.Fill((byte)pattern.Length);
 
             for (int i = 0; i < pattern.Length - 1; i++)
@@ -84,7 +83,7 @@ namespace StringSearchingExtensions
                 var patternChar = pattern[i];
                 var value = (byte)(pattern.Length - i - 1);
                 int blockIndex = patternChar / BlockSize;
-                skipArray[blockIndex * BlockSize + patternChar % BlockSize] = value;
+                skipArray[blockIndex + patternChar % BlockSize] = value;
             }
 
             int index = 0;
@@ -104,7 +103,7 @@ namespace StringSearchingExtensions
                     continue;
                 }
 
-                index += Math.Max(skipArray[text[index + j] / SquaredBlockSize + text[index + j] % BlockSize] - pattern.Length + 1 + j, 1);
+                index += Math.Max(skipArray[text[index + j] / BlockSize + text[index + j] % BlockSize] - pattern.Length + 1 + j, 1);
             }
 
             return counter;
